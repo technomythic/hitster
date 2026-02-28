@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melody Timeline - Music Trivia Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 min-h-screen text-white">
+    
+    <div id="app" class="container mx-auto px-4 py-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-6xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-400">
+                🎵 Melody Timeline
+            </h1>
+            <p class="text-xl text-purple-200">Can you place the songs in chronological order?</p>
+        </header>
+
+        <div id="game-screen" class="hidden">
+            
+            <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-2xl font-bold">Score: <span id="score">0</span></div>
+                    <div class="text-lg">Cards Placed: <span id="cards-placed">0</span></div>
+                </div>
+                
+                <div class="flex gap-4">
+                    <button id="reveal-btn" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105">
+                        👁️ Reveal Info
+                    </button>
+                    <button id="check-order-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105">
+                        ✓ Check Order
+                    </button>
+                    <button id="new-game-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105">
+                        🔄 New Game
+                    </button>
+                </div>
+            </div>
+
+            <div id="current-card-container" class="mb-8">
+                <h2 class="text-2xl font-bold mb-4 text-center">Current Card</h2>
+                <div id="current-card" class="flex justify-center">
+                </div>
+            </div>
+
+            <div id="placement-controls" class="hidden mb-8">
+                <h3 class="text-xl font-bold mb-4 text-center">Where should this song go?</h3>
+                <div class="flex justify-center gap-4">
+                    <button id="place-before-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105">
+                        ⬅️ Before
+                    </button>
+                    <button id="place-after-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105">
+                        ➡️ After
+                    </button>
+                </div>
+            </div>
+
+            <div id="timeline-container" class="mb-8">
+                <h2 class="text-2xl font-bold mb-4 text-center">Your Timeline</h2>
+                <div id="timeline" class="flex gap-4 overflow-x-auto pb-4 min-h-[300px] items-center justify-center">
+                    <div class="text-gray-400 text-xl">Timeline will appear here...</div>
+                </div>
+            </div>
+
+            <div id="audio-player" class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-2xl">
+                <div class="flex items-center gap-4 mb-4">
+                    <button id="play-pause-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105">
+                        ▶️ Play
+                    </button>
+                    <div class="flex-1">
+                        <div class="bg-gray-700 rounded-full h-2 overflow-hidden">
+                            <div id="progress-bar" class="bg-purple-500 h-full w-0 transition-all"></div>
+                        </div>
+                    </div>
+                    <div id="time-display" class="text-sm">0:00 / 0:00</div>
+                </div>
+                <audio id="audio-element" preload="auto"></audio>
+            </div>
+        </div>
+
+        <div id="start-screen" class="text-center">
+            <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-12 max-w-2xl mx-auto shadow-2xl">
+                <h2 class="text-3xl font-bold mb-6">How to Play</h2>
+                <div class="text-left space-y-4 mb-8">
+                    <p class="flex items-start gap-3">
+                        <span class="text-2xl">1️⃣</span>
+                        <span>Listen to a song snippet and see the album cover</span>
+                    </p>
+                    <p class="flex items-start gap-3">
+                        <span class="text-2xl">2️⃣</span>
+                        <span>Decide if it came BEFORE or AFTER the cards in your timeline</span>
+                    </p>
+                    <p class="flex items-start gap-3">
+                        <span class="text-2xl">3️⃣</span>
+                        <span>Build your timeline chronologically to win!</span>
+                    </p>
+                    <p class="flex items-start gap-3">
+                        <span class="text-2xl">4️⃣</span>
+                        <span>Use "Reveal Info" to see song details and years, then "Check Order" to validate</span>
+                    </p>
+                </div>
+                <button id="start-game-btn" class="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold py-4 px-12 rounded-lg text-xl transition-all transform hover:scale-105 shadow-lg">
+                    🎮 Start Game
+                </button>
+            </div>
+        </div>
+
+        <div id="message-container" class="fixed top-4 right-4 z-50"></div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

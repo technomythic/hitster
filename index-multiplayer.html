@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Melody Timeline - Multiplayer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        @media (max-width: 768px) {
+            .card { width: 150px; min-width: 150px; }
+            .card img { height: 120px; }
+            .card .title { font-size: 0.875rem; }
+            .card .artist { font-size: 0.75rem; }
+            .card .year { font-size: 1.25rem; }
+        }
+        
+        .mobile-menu { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            z-index: 100;
+        }
+        
+        .team-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 min-h-screen text-white">
+    
+    <div id="app" class="container mx-auto px-4 py-8 pb-24">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-6xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-400">
+                🎵 Melody Timeline
+            </h1>
+            <p class="text-lg md:text-xl text-purple-200">Multiplayer Music Trivia</p>
+        </header>
+
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="max-w-4xl mx-auto">
+            <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 md:p-12 shadow-2xl">
+                
+                <!-- Player Name Setup -->
+                <div id="name-setup" class="mb-8">
+                    <h2 class="text-2xl font-bold mb-4">Enter Your Name</h2>
+                    <input type="text" id="player-name-input" 
+                           class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white text-lg mb-4"
+                           placeholder="Your Name" maxlength="20">
+                    <button id="save-name-btn" 
+                            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg">
+                        Continue
+                    </button>
+                </div>
+
+                <!-- Mode Selection -->
+                <div id="mode-selection" class="hidden">
+                    <h2 class="text-3xl font-bold mb-6 text-center">Choose Mode</h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- Host Game -->
+                        <div class="bg-white/5 rounded-xl p-6 border-2 border-green-500/50 hover:border-green-500 transition cursor-pointer" id="host-card">
+                            <div class="text-center">
+                                <div class="text-6xl mb-4">🎮</div>
+                                <h3 class="text-2xl font-bold mb-3 text-green-400">Host Game</h3>
+                                <p class="text-sm mb-4">Create a room and invite friends</p>
+                                <button id="host-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg">
+                                    Create Room
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Join Game -->
+                        <div class="bg-white/5 rounded-xl p-6 border-2 border-blue-500/50 hover:border-blue-500 transition cursor-pointer" id="join-card">
+                            <div class="text-center">
+                                <div class="text-6xl mb-4">🚪</div>
+                                <h3 class="text-2xl font-bold mb-3 text-blue-400">Join Game</h3>
+                                <p class="text-sm mb-4">Enter a room code</p>
+                                <input type="text" id="room-code-input" 
+                                       class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white text-center text-2xl font-bold mb-3 uppercase"
+                                       placeholder="ABC123" maxlength="6">
+                                <button id="join-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg">
+                                    Join Room
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 text-center">
+                        <button id="solo-mode-btn" class="text-purple-300 hover:text-white underline">
+                            Play Solo Instead
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Room Lobby -->
+                <div id="room-lobby" class="hidden">
+                    <div class="text-center mb-6">
+                        <h2 class="text-3xl font-bold mb-2">Room Code</h2>
+                        <div class="text-6xl font-bold text-green-400 mb-2" id="display-room-code">------</div>
+                        <button id="copy-code-btn" class="text-sm text-purple-300 hover:text-white underline">
+                            📋 Copy Code
+                        </button>
+                    </div>
+
+                    <!-- Settings (Host Only) -->
+                    <div id="host-settings" class="hidden mb-6">
+                        <h3 class="text-xl font-bold mb-4">Game Settings</h3>
+                        <div class="bg-white/5 rounded-lg p-4 space-y-4">
+                            <div>
+                                <label class="block text-sm mb-2">Number of Teams</label>
+                                <select id="team-count-select" class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded text-white">
+                                    <option value="2">2 Teams</option>
+                                    <option value="3">3 Teams</option>
+                                    <option value="4">4 Teams</option>
+                                    <option value="0">Free-for-All (No Teams)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Cards to Win</label>
+                                <input type="number" id="cards-to-win" min="5" max="30" value="10" 
+                                       class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Music Source</label>
+                                <select id="music-source-select" class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded text-white">
+                                    <option value="local">Local Files</option>
+                                    <option value="spotify">Spotify Playlist</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Players List -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-bold mb-4">Players (<span id="player-count">0</span>/10)</h3>
+                        <div id="players-list" class="space-y-2"></div>
+                    </div>
+
+                    <!-- Team Assignment (Host Only) -->
+                    <div id="team-assignment" class="hidden mb-6">
+                        <h3 class="text-xl font-bold mb-4">Assign Teams</h3>
+                        <div id="team-containers" class="grid gap-4"></div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4">
+                        <button id="leave-room-btn" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg">
+                            Leave Room
+                        </button>
+                        <button id="start-game-btn" class="hidden flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg">
+                            Start Game
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+            
+            <!-- Score Header -->
+            <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-4 md:p-6 mb-6 shadow-2xl">
+                <div id="team-scores" class="grid gap-4 mb-4"></div>
+                <div class="text-center text-sm text-purple-200">
+                    Current Turn: <span id="current-turn" class="font-bold text-white">Team 1</span>
+                </div>
+            </div>
+
+            <!-- Current Card -->
+            <div id="current-card-container" class="mb-8">
+                <h2 class="text-xl md:text-2xl font-bold mb-4 text-center">Current Card</h2>
+                <div id="current-card" class="flex justify-center"></div>
+            </div>
+
+            <!-- Placement Controls -->
+            <div id="placement-controls" class="hidden mb-8">
+                <h3 class="text-lg md:text-xl font-bold mb-4 text-center">Where should this song go?</h3>
+                <div class="flex justify-center gap-4">
+                    <button id="place-before-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg">
+                        ⬅️ Before
+                    </button>
+                    <button id="place-after-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg">
+                        ➡️ After
+                    </button>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div id="timeline-container" class="mb-8">
+                <h2 class="text-xl md:text-2xl font-bold mb-4 text-center">Timeline</h2>
+                <div id="timeline" class="flex gap-4 overflow-x-auto pb-4 min-h-[200px] md:min-h-[300px] items-center justify-center">
+                    <div class="text-gray-400 text-xl">Timeline will appear here...</div>
+                </div>
+            </div>
+
+            <!-- Audio Player -->
+            <div id="audio-player" class="bg-white/10 backdrop-blur-lg rounded-2xl p-4 md:p-6 shadow-2xl">
+                <div class="flex items-center gap-4 mb-4">
+                    <button id="play-pause-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 md:py-3 px-4 md:px-6 rounded-lg">
+                        ▶️ Play
+                    </button>
+                    <div class="flex-1">
+                        <div class="bg-gray-700 rounded-full h-2 overflow-hidden">
+                            <div id="progress-bar" class="bg-purple-500 h-full w-0 transition-all"></div>
+                        </div>
+                    </div>
+                    <div id="time-display" class="text-sm">0:00 / 0:00</div>
+                </div>
+                <audio id="audio-element" preload="auto" crossorigin="anonymous"></audio>
+            </div>
+        </div>
+
+        <div id="message-container" class="fixed top-4 right-4 z-50"></div>
+    </div>
+
+    <!-- Mobile Bottom Menu -->
+    <div class="mobile-menu md:hidden" id="mobile-menu">
+        <div class="flex gap-2 justify-around">
+            <button id="mobile-reveal-btn" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-3 rounded text-sm">
+                👁️ Reveal
+            </button>
+            <button id="mobile-check-btn" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-3 rounded text-sm">
+                ✓ Check
+            </button>
+            <button id="mobile-menu-btn" class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-3 rounded text-sm">
+                ☰ Menu
+            </button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script src="spotify-auth.js"></script>
+    <script src="multiplayer-client.js"></script>
+    <script src="multiplayer-game.js"></script>
+</body>
+</html>

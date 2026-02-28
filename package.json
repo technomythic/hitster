@@ -1,0 +1,16 @@
+{
+  "name": "melody-timeline-multiplayer",
+  "version": "1.0.0",
+  "description": "Multiplayer music trivia game server",
+  "main": "multiplayer-server.js",
+  "scripts": {
+    "start": "node multiplayer-server.js",
+    "dev": "nodemon multiplayer-server.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
