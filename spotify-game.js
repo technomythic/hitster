@@ -18,6 +18,13 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
         const localModeBtn = document.getElementById('local-mode-btn');
         const clientIdInput = document.getElementById('spotify-client-id');
         const saveClientIdBtn = document.getElementById('save-client-id-btn');
+        const playlistUrlInput = document.getElementById('playlist-url-input');
+        const loadUrlBtn = document.getElementById('load-url-btn');
+        const toggleMultiMode = document.getElementById('toggle-multi-mode');
+        const toggleSingleMode = document.getElementById('toggle-single-mode');
+        const loadMixedBtn = document.getElementById('load-mixed-playlists-btn');
+        const selectAllBtn = document.getElementById('select-all-playlists');
+        const deselectAllBtn = document.getElementById('deselect-all-playlists');
         
         if (spotifyBtn) {
             spotifyBtn.addEventListener('click', () => this.loginToSpotify());
@@ -25,6 +32,30 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
         
         if (loadPlaylistBtn) {
             loadPlaylistBtn.addEventListener('click', () => this.loadSelectedPlaylist());
+        }
+        
+        if (loadUrlBtn) {
+            loadUrlBtn.addEventListener('click', () => this.loadPlaylistFromUrl());
+        }
+        
+        if (loadMixedBtn) {
+            loadMixedBtn.addEventListener('click', () => this.loadMixedPlaylists());
+        }
+        
+        if (toggleMultiMode) {
+            toggleMultiMode.addEventListener('click', () => this.togglePlaylistMode(true));
+        }
+        
+        if (toggleSingleMode) {
+            toggleSingleMode.addEventListener('click', () => this.togglePlaylistMode(false));
+        }
+        
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', () => this.selectAllPlaylists(true));
+        }
+        
+        if (deselectAllBtn) {
+            deselectAllBtn.addEventListener('click', () => this.selectAllPlaylists(false));
         }
         
         if (localModeBtn) {
@@ -45,6 +76,24 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
         if (savedClientId && clientIdInput) {
             clientIdInput.value = savedClientId;
         }
+    }
+    
+    extractPlaylistId(url) {
+        const match = url.match(/playlist\/([a-zA-Z0-9]+)/);
+        return match ? match[1] : url;
+    }
+    
+    async loadPlaylistFromUrl() {
+        const urlInput = document.getElementById('playlist-url-input');
+        const url = urlInput?.value.trim();
+        
+        if (!url) {
+            this.showMessage('Please enter a Spotify playlist URL or ID', 'info');
+            return;
+        }
+        
+        const playlistId = this.extractPlaylistId(url);
+        await this.loadPlaylistById(playlistId);
     }
     
     async checkSpotifyAuth() {
@@ -97,23 +146,171 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
     async loadPlaylists() {
         try {
             const playlists = await this.spotifyAuth.getUserPlaylists();
+            this.allPlaylists = playlists;
+            
             const playlistSelect = document.getElementById('playlist-select');
             
             if (!playlistSelect) return;
             
             playlistSelect.innerHTML = '<option value="">Select a playlist...</option>';
             
+            const topHitsOption = document.createElement('option');
+            topHitsOption.value = '37i9dQZF1DXcBWIGoYBM5M';
+            topHitsOption.textContent = '🔥 Today\'s Top Hits (Spotify)';
+            playlistSelect.appendChild(topHitsOption);
+            
+            const divider = document.createElement('option');
+            divider.disabled = true;
+            divider.textContent = '─────── Your Playlists ───────';
+            playlistSelect.appendChild(divider);
+            
             playlists.forEach(playlist => {
                 const option = document.createElement('option');
                 option.value = playlist.id;
-                option.textContent = `${playlist.name} (${playlist.tracks.total} tracks)`;
+                const trackCount = playlist.tracks?.total || '?';
+                option.textContent = `${playlist.name} (${trackCount} tracks)`;
                 playlistSelect.appendChild(option);
             });
+            
+            this.populatePlaylistCheckboxes(playlists);
             
         } catch (error) {
             console.error('Error loading playlists:', error);
             this.showMessage('Error loading playlists: ' + error.message, 'error');
         }
+    }
+    
+    populatePlaylistCheckboxes(playlists) {
+        const container = document.getElementById('playlist-checkboxes');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        const topHitsCheckbox = this.createPlaylistCheckbox({
+            id: '37i9dQZF1DXcBWIGoYBM5M',
+            name: '🔥 Today\'s Top Hits',
+            tracks: { total: '?' }
+        });
+        container.appendChild(topHitsCheckbox);
+        
+        const divider = document.createElement('div');
+        divider.className = 'border-t border-white/20 my-2';
+        container.appendChild(divider);
+        
+        playlists.forEach(playlist => {
+            const checkbox = this.createPlaylistCheckbox(playlist);
+            container.appendChild(checkbox);
+        });
+    }
+    
+    createPlaylistCheckbox(playlist) {
+        const label = document.createElement('label');
+        label.className = 'flex items-center gap-2 cursor-pointer hover:bg-white/10 p-2 rounded';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = playlist.id;
+        checkbox.className = 'w-4 h-4';
+        
+        const text = document.createElement('span');
+        text.className = 'text-sm flex-1';
+        const trackCount = playlist.tracks?.total || '?';
+        text.textContent = `${playlist.name} (${trackCount} tracks)`;
+        
+        label.appendChild(checkbox);
+        label.appendChild(text);
+        
+        return label;
+    }
+    
+    togglePlaylistMode(isMulti) {
+        const singleContainer = document.getElementById('playlist-select')?.parentElement;
+        const multiContainer = document.getElementById('multi-playlist-container');
+        
+        if (isMulti) {
+            singleContainer?.classList.add('hidden');
+            multiContainer?.classList.remove('hidden');
+        } else {
+            singleContainer?.classList.remove('hidden');
+            multiContainer?.classList.add('hidden');
+        }
+    }
+    
+    selectAllPlaylists(select) {
+        const checkboxes = document.querySelectorAll('#playlist-checkboxes input[type="checkbox"]');
+        checkboxes.forEach(cb => cb.checked = select);
+    }
+    
+    async loadMixedPlaylists() {
+        const checkboxes = document.querySelectorAll('#playlist-checkboxes input[type="checkbox"]:checked');
+        const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+        
+        if (selectedIds.length === 0) {
+            this.showMessage('Please select at least one playlist', 'info');
+            return;
+        }
+        
+        try {
+            this.showMessage(`Loading ${selectedIds.length} playlists...`, 'info');
+            
+            const allTracks = [];
+            
+            for (const playlistId of selectedIds) {
+                const tracks = await this.spotifyAuth.getPlaylistTracks(playlistId);
+                allTracks.push(...tracks);
+            }
+            
+            this.spotifyTracks = allTracks
+                .filter(item => item.track && item.track.preview_url)
+                .map(item => ({
+                    id: item.track.id,
+                    title: item.track.name,
+                    artist: item.track.artists.map(a => a.name).join(', '),
+                    year: new Date(item.track.album.release_date).getFullYear(),
+                    preview_url: item.track.preview_url,
+                    image_url: item.track.album.images[0]?.url || '',
+                    album: item.track.album.name
+                }));
+            
+            const uniqueTracks = this.deduplicateTracks(this.spotifyTracks);
+            this.spotifyTracks = this.shuffleArray(uniqueTracks);
+            
+            if (this.spotifyTracks.length === 0) {
+                this.showMessage('No tracks with previews found in selected playlists', 'error');
+                return;
+            }
+            
+            this.gameData = this.spotifyTracks;
+            this.spotifyMode = true;
+            
+            this.showMessage(`🎵 Mixed ${selectedIds.length} playlists! ${this.spotifyTracks.length} unique tracks loaded!`, 'success');
+            
+            this.startGame();
+            
+        } catch (error) {
+            console.error('Error loading mixed playlists:', error);
+            this.showMessage('Error loading playlists: ' + error.message, 'error');
+        }
+    }
+    
+    deduplicateTracks(tracks) {
+        const seen = new Set();
+        return tracks.filter(track => {
+            if (seen.has(track.id)) {
+                return false;
+            }
+            seen.add(track.id);
+            return true;
+        });
+    }
+    
+    shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
     }
     
     async loadSelectedPlaylist() {
@@ -125,6 +322,10 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
             return;
         }
         
+        await this.loadPlaylistById(playlistId);
+    }
+    
+    async loadPlaylistById(playlistId) {
         try {
             this.showMessage('Loading playlist tracks...', 'info');
             

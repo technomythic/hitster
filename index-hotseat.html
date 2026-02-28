@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hitster Web Edition - Pass & Play</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .player-indicator {
+            transition: all 0.3s ease;
+        }
+        .player-active {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 214, 10, 0.6);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 min-h-screen text-white">
+    
+    <div id="app" class="container mx-auto px-4 py-8">
+        
+        <!-- Header with Menu -->
+        <div class="flex justify-between items-center mb-8">
+            <a href="index-menu.html" class="bg-white/10 backdrop-blur-lg px-4 py-2 rounded-lg hover:bg-white/20 transition">
+                ← Menu
+            </a>
+            <h1 class="logo-text text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-400">
+                HITSTER
+            </h1>
+            <div class="w-20"></div>
+        </div>
+
+        <!-- Setup Screen -->
+        <div id="setup-screen">
+            <div class="max-w-2xl mx-auto bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl">
+                <h2 class="text-3xl font-bold mb-6 text-center">Pass & Play Setup</h2>
+                
+                <div class="mb-6">
+                    <label class="block text-lg font-semibold mb-3">Number of Players:</label>
+                    <div class="grid grid-cols-5 gap-3">
+                        <button class="player-count-btn bg-white/10 hover:bg-white/20 py-3 rounded-lg font-bold transition" data-count="2">2</button>
+                        <button class="player-count-btn bg-white/10 hover:bg-white/20 py-3 rounded-lg font-bold transition" data-count="3">3</button>
+                        <button class="player-count-btn bg-white/10 hover:bg-white/20 py-3 rounded-lg font-bold transition" data-count="4">4</button>
+                        <button class="player-count-btn bg-white/10 hover:bg-white/20 py-3 rounded-lg font-bold transition" data-count="5">5</button>
+                        <button class="player-count-btn bg-white/10 hover:bg-white/20 py-3 rounded-lg font-bold transition" data-count="6">6</button>
+                    </div>
+                </div>
+
+                <div id="player-names-container" class="mb-6 hidden">
+                    <label class="block text-lg font-semibold mb-3">Player Names:</label>
+                    <div id="player-inputs" class="space-y-3"></div>
+                </div>
+
+                <button id="start-game-btn" class="hidden w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                    🎮 Start Game
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+            
+            <!-- Player Indicators -->
+            <div id="players-bar" class="bg-white/10 backdrop-blur-lg rounded-2xl p-4 mb-6 shadow-2xl">
+                <div class="flex flex-wrap gap-3 justify-center" id="player-indicators"></div>
+            </div>
+
+            <!-- Current Turn Banner -->
+            <div class="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl p-6 mb-6 text-center shadow-2xl">
+                <div class="text-sm font-semibold mb-1">CURRENT TURN</div>
+                <div class="text-4xl font-bold" id="current-player-name">Player 1</div>
+                <div class="text-sm mt-2">Pass the device to this player!</div>
+            </div>
+
+            <!-- Score Display -->
+            <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-xl font-bold">Round: <span id="round-number">1</span></div>
+                    <div class="text-lg">Cards Placed: <span id="cards-placed">0</span></div>
+                </div>
+                
+                <div class="flex flex-wrap gap-3">
+                    <button id="reveal-btn" class="flex-1 min-w-[140px] bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                        👁️ Reveal Info
+                    </button>
+                    <button id="end-turn-btn" class="flex-1 min-w-[140px] bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                        ➡️ End Turn
+                    </button>
+                    <button id="new-game-btn" class="flex-1 min-w-[140px] bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                        🔄 New Game
+                    </button>
+                </div>
+            </div>
+
+            <!-- Current Card -->
+            <div id="current-card-container" class="mb-8">
+                <h2 class="text-2xl font-bold mb-4 text-center">Current Card</h2>
+                <div id="current-card" class="flex justify-center"></div>
+            </div>
+
+            <!-- Placement Controls -->
+            <div id="placement-controls" class="hidden mb-8">
+                <h3 class="text-2xl font-bold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-400">
+                    📍 Where should this song go?
+                </h3>
+                <div class="flex justify-center gap-6">
+                    <button id="place-before-btn" class="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-bold py-4 px-10 rounded-xl transition-all transform hover:scale-110 shadow-2xl">
+                        ⬅️ BEFORE
+                    </button>
+                    <button id="place-after-btn" class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-10 rounded-xl transition-all transform hover:scale-110 shadow-2xl">
+                        AFTER ➡️
+                    </button>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div id="timeline-container" class="mb-8">
+                <h2 class="text-2xl font-bold mb-4 text-center">Timeline</h2>
+                <div id="timeline" class="flex gap-4 overflow-x-auto pb-4 min-h-[300px] items-center justify-center">
+                    <div class="text-gray-400 text-xl">Timeline will appear here...</div>
+                </div>
+            </div>
+
+            <!-- Audio Player -->
+            <div id="audio-player" class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-2xl">
+                <div class="flex items-center gap-4 mb-4">
+                    <button id="play-pause-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105">
+                        ▶️ Play
+                    </button>
+                    <div class="flex-1">
+                        <div class="bg-gray-700 rounded-full h-2 overflow-hidden">
+                            <div id="progress-bar" class="bg-purple-500 h-full w-0 transition-all"></div>
+                        </div>
+                    </div>
+                    <div id="time-display" class="text-sm">0:00 / 0:00</div>
+                </div>
+                <audio id="audio-element" preload="auto"></audio>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="hidden">
+            <div class="max-w-3xl mx-auto bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl text-center">
+                <h2 class="text-5xl font-bold mb-6">🎉 Game Over!</h2>
+                
+                <div id="final-scores" class="mb-8"></div>
+
+                <div class="flex gap-4 justify-center">
+                    <button id="play-again-btn" class="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                        🔄 Play Again
+                    </button>
+                    <a href="index-menu.html" class="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 shadow-lg inline-block">
+                        🏠 Main Menu
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="message-container" class="fixed top-4 right-4 z-50"></div>
+    </div>
+
+    <script src="game.js"></script>
+    <script src="hotseat-game.js"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hitster Web Edition - Main Menu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .mode-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .mode-card:hover {
+            transform: translateY(-12px) scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 min-h-screen text-white">
+    
+    <div class="container mx-auto px-4 py-8 min-h-screen flex flex-col">
+        
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <div class="inline-block mb-4">
+                <div class="text-8xl mb-2 animate-bounce">🎵</div>
+            </div>
+            <h1 class="logo-text text-8xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 drop-shadow-2xl">
+                HITSTER
+            </h1>
+            <div class="text-sm font-semibold tracking-widest text-purple-300 mb-2">WEB EDITION</div>
+            <p class="text-xl text-purple-200 max-w-3xl mx-auto">
+                🎧 The ultimate music timeline challenge
+            </p>
+        </header>
+
+        <!-- Game Modes -->
+        <div class="flex-1 max-w-6xl mx-auto w-full">
+            <h2 class="text-3xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 to-purple-400">
+                Choose Your Game Mode
+            </h2>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                
+                <!-- Solo Mode -->
+                <a href="index.html" class="mode-card block bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border-2 border-white/20 hover:border-purple-400">
+                    <div class="text-6xl mb-4 text-center">🎮</div>
+                    <h3 class="text-2xl font-bold mb-3 text-center">Solo Play</h3>
+                    <p class="text-purple-200 text-center mb-4">
+                        Play alone with local music files
+                    </p>
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        <span class="text-xs px-3 py-1 bg-blue-500/30 rounded-full">Offline</span>
+                        <span class="text-xs px-3 py-1 bg-green-500/30 rounded-full">Local Files</span>
+                    </div>
+                </a>
+
+                <!-- Spotify Mode -->
+                <a href="index-spotify.html" class="mode-card block bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border-2 border-white/20 hover:border-green-400">
+                    <div class="text-6xl mb-4 text-center">🎧</div>
+                    <h3 class="text-2xl font-bold mb-3 text-center">Spotify Mode</h3>
+                    <p class="text-purple-200 text-center mb-4">
+                        Play with any Spotify playlist
+                    </p>
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        <span class="text-xs px-3 py-1 bg-green-500/30 rounded-full">Online</span>
+                        <span class="text-xs px-3 py-1 bg-purple-500/30 rounded-full">Spotify</span>
+                    </div>
+                </a>
+
+                <!-- Local Multiplayer -->
+                <a href="index-hotseat.html" class="mode-card block bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border-2 border-white/20 hover:border-yellow-400">
+                    <div class="text-6xl mb-4 text-center">👥</div>
+                    <h3 class="text-2xl font-bold mb-3 text-center">Pass & Play</h3>
+                    <p class="text-purple-200 text-center mb-4">
+                        Take turns on one device
+                    </p>
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        <span class="text-xs px-3 py-1 bg-yellow-500/30 rounded-full">2-6 Players</span>
+                        <span class="text-xs px-3 py-1 bg-orange-500/30 rounded-full">Hot-Seat</span>
+                    </div>
+                </a>
+
+                <!-- Online Multiplayer -->
+                <a href="index-multiplayer.html" class="mode-card block bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border-2 border-white/20 hover:border-red-400">
+                    <div class="text-6xl mb-4 text-center">🌐</div>
+                    <h3 class="text-2xl font-bold mb-3 text-center">Online Multiplayer</h3>
+                    <p class="text-purple-200 text-center mb-4">
+                        Play with friends online
+                    </p>
+                    <div class="flex flex-wrap gap-2 justify-center">
+                        <span class="text-xs px-3 py-1 bg-red-500/30 rounded-full">Online</span>
+                        <span class="text-xs px-3 py-1 bg-pink-500/30 rounded-full">Teams</span>
+                    </div>
+                </a>
+
+                <!-- How to Play -->
+                <div class="mode-card bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border-2 border-white/20">
+                    <div class="text-6xl mb-4 text-center">📖</div>
+                    <h3 class="text-2xl font-bold mb-3 text-center">How to Play</h3>
+                    <ul class="text-sm text-purple-200 space-y-2">
+                        <li>🎵 Listen to song snippets</li>
+                        <li>📅 Guess the year</li>
+                        <li>⏱️ Place in timeline order</li>
+                        <li>✅ Check if you're correct!</li>
+                    </ul>
+                </div>
+
+                <!-- Settings/Info -->
+                <div class="mode-card bg-white/10 backdrop-blur-lg rounded-2xl p-8 shadow-2xl border-2 border-white/20">
+                    <div class="text-6xl mb-4 text-center">⚙️</div>
+                    <h3 class="text-2xl font-bold mb-3 text-center">About</h3>
+                    <p class="text-sm text-purple-200 mb-3">
+                        Hitster Web Edition v1.0
+                    </p>
+                    <p class="text-xs text-purple-300">
+                        A music timeline game inspired by the original Hitster board game.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center text-purple-300 text-sm mt-8">
+            <p>🎵 Made with love for music fans everywhere</p>
+        </footer>
+    </div>
+
+</body>
+</html>
