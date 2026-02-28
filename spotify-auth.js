@@ -165,7 +165,7 @@ class SpotifyAuth {
     }
 
     async getUserPlaylists() {
-        const data = await this.fetchSpotifyAPI('/me/playlists?limit=50');
+        const data = await this.fetchSpotifyAPI('/me/playlists?limit=50&fields=items(id,name,tracks.total,images)');
         return data.items;
     }
 

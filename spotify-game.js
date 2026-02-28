@@ -171,11 +171,16 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
             playlists.forEach(playlist => {
                 const option = document.createElement('option');
                 option.value = playlist.id;
-                const trackCount = playlist.tracks?.total || '?';
+                const trackCount = playlist.tracks?.total ?? playlist.tracks?.href ? 'Loading...' : '?';
                 option.textContent = `${playlist.name} (${trackCount} tracks)`;
                 option.style.background = '#1a1a2e';
                 option.style.color = 'white';
                 playlistSelect.appendChild(option);
+                
+                // Debug log to see what we're getting
+                if (!playlist.tracks || !playlist.tracks.total) {
+                    console.log('Playlist missing track count:', playlist.name, playlist);
+                }
             });
             
             this.populatePlaylistCheckboxes(playlists);
