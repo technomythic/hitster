@@ -172,11 +172,32 @@ class SpotifyAuth {
     async getPlaylistTracks(playlistId) {
         const tracks = [];
         let url = `/playlists/${playlistId}/tracks?limit=100`;
+        let retries = 0;
+        const maxRetries = 3;
 
         while (url) {
-            const data = await this.fetchSpotifyAPI(url);
-            tracks.push(...data.items);
-            url = data.next ? data.next.replace('https://api.spotify.com/v1', '') : null;
+            try {
+                const data = await this.fetchSpotifyAPI(url);
+                
+                if (!data || !data.items) {
+                    console.error('Invalid response from Spotify API:', data);
+                    break;
+                }
+                
+                tracks.push(...data.items);
+                url = data.next ? data.next.replace('https://api.spotify.com/v1', '') : null;
+                retries = 0;
+                
+            } catch (error) {
+                retries++;
+                console.error(`Error fetching tracks (attempt ${retries}/${maxRetries}):`, error);
+                
+                if (retries >= maxRetries) {
+                    throw new Error(`Failed to load playlist after ${maxRetries} attempts: ${error.message}`);
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+            }
         }
 
         return tracks;

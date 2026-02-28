@@ -262,21 +262,42 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
             const allTracks = [];
             
             for (const playlistId of selectedIds) {
-                const tracks = await this.spotifyAuth.getPlaylistTracks(playlistId);
-                allTracks.push(...tracks);
+                try {
+                    const tracks = await this.spotifyAuth.getPlaylistTracks(playlistId);
+                    if (tracks && Array.isArray(tracks)) {
+                        allTracks.push(...tracks);
+                    }
+                } catch (err) {
+                    console.warn(`Failed to load playlist ${playlistId}:`, err);
+                }
             }
             
             this.spotifyTracks = allTracks
-                .filter(item => item.track && item.track.preview_url)
-                .map(item => ({
-                    id: item.track.id,
-                    title: item.track.name,
-                    artist: item.track.artists.map(a => a.name).join(', '),
-                    year: new Date(item.track.album.release_date).getFullYear(),
-                    preview_url: item.track.preview_url,
-                    image_url: item.track.album.images[0]?.url || '',
-                    album: item.track.album.name
-                }));
+                .filter(item => {
+                    if (!item || !item.track) return false;
+                    if (!item.track.preview_url) return false;
+                    if (!item.track.name || !item.track.id) return false;
+                    if (!item.track.album || !item.track.album.release_date) return false;
+                    if (!item.track.artists || !Array.isArray(item.track.artists)) return false;
+                    return true;
+                })
+                .map(item => {
+                    try {
+                        return {
+                            id: item.track.id,
+                            title: item.track.name,
+                            artist: item.track.artists.map(a => a.name).join(', '),
+                            year: new Date(item.track.album.release_date).getFullYear(),
+                            preview_url: item.track.preview_url,
+                            image_url: item.track.album.images?.[0]?.url || '',
+                            album: item.track.album.name || 'Unknown Album'
+                        };
+                    } catch (err) {
+                        console.warn('Skipping track due to error:', err);
+                        return null;
+                    }
+                })
+                .filter(track => track !== null);
             
             const uniqueTracks = this.deduplicateTracks(this.spotifyTracks);
             this.spotifyTracks = this.shuffleArray(uniqueTracks);
@@ -337,20 +358,39 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
             
             const tracks = await this.spotifyAuth.getPlaylistTracks(playlistId);
             
+            if (!tracks || !Array.isArray(tracks)) {
+                throw new Error('Invalid playlist data received');
+            }
+            
             this.spotifyTracks = tracks
-                .filter(item => item.track && item.track.preview_url)
-                .map(item => ({
-                    id: item.track.id,
-                    title: item.track.name,
-                    artist: item.track.artists.map(a => a.name).join(', '),
-                    year: new Date(item.track.album.release_date).getFullYear(),
-                    preview_url: item.track.preview_url,
-                    image_url: item.track.album.images[0]?.url || '',
-                    album: item.track.album.name
-                }));
+                .filter(item => {
+                    if (!item || !item.track) return false;
+                    if (!item.track.preview_url) return false;
+                    if (!item.track.name || !item.track.id) return false;
+                    if (!item.track.album || !item.track.album.release_date) return false;
+                    if (!item.track.artists || !Array.isArray(item.track.artists)) return false;
+                    return true;
+                })
+                .map(item => {
+                    try {
+                        return {
+                            id: item.track.id,
+                            title: item.track.name,
+                            artist: item.track.artists.map(a => a.name).join(', '),
+                            year: new Date(item.track.album.release_date).getFullYear(),
+                            preview_url: item.track.preview_url,
+                            image_url: item.track.album.images?.[0]?.url || '',
+                            album: item.track.album.name || 'Unknown Album'
+                        };
+                    } catch (err) {
+                        console.warn('Skipping track due to error:', err, item);
+                        return null;
+                    }
+                })
+                .filter(track => track !== null);
             
             if (this.spotifyTracks.length === 0) {
-                this.showMessage('No tracks with previews found in this playlist', 'error');
+                this.showMessage('No tracks with previews found in this playlist. Try a different playlist.', 'error');
                 return;
             }
             
