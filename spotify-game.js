@@ -5,8 +5,6 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
         this.spotifyMode = false;
         this.currentPlaylistId = null;
         this.spotifyTracks = [];
-        this.useEmbed = false;
-
         this.initializeSpotifyUI();
         this.checkSpotifyAuth();
     }
@@ -240,43 +238,32 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
 
     _processRawTracks(rawTracks) {
         const totalRaw = rawTracks.length;
+        const processed = [];
 
-        const validTracks = rawTracks.filter(item => {
-            if (!item || !item.track) return false;
-            if (!item.track.name || !item.track.id) return false;
-            if (!item.track.artists || !Array.isArray(item.track.artists) || item.track.artists.length === 0) return false;
-            if (!item.track.album) return false;
-            return true;
-        });
-
-        const withPreview = [];
-        const withoutPreview = [];
-
-        validTracks.forEach(item => {
+        rawTracks.forEach(item => {
             try {
-                const track = {
+                if (!item || !item.track) return;
+                if (!item.track.name || !item.track.id) return;
+                if (!item.track.artists || !Array.isArray(item.track.artists) || item.track.artists.length === 0) return;
+                if (!item.track.album) return;
+
+                const year = this._extractYear(item.track.album.release_date);
+                if (!year || year < 1900 || year > new Date().getFullYear() + 1) return;
+
+                processed.push({
                     id: item.track.id,
                     title: item.track.name,
                     artist: item.track.artists.map(a => a.name).join(', '),
-                    year: this._extractYear(item.track.album.release_date),
-                    preview_url: item.track.preview_url || null,
+                    year: year,
                     image_url: item.track.album.images?.[0]?.url || '',
                     album: item.track.album.name || 'Unknown Album'
-                };
-
-                if (track.year && track.year > 1900 && track.year <= new Date().getFullYear() + 1) {
-                    if (track.preview_url) {
-                        withPreview.push(track);
-                    } else {
-                        withoutPreview.push(track);
-                    }
-                }
+                });
             } catch (err) {
                 console.warn('Skipping malformed track:', err);
             }
         });
 
-        return { withPreview, withoutPreview, totalRaw };
+        return { processed, totalRaw };
     }
 
     _extractYear(dateStr) {
@@ -360,43 +347,26 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
     }
 
     _finishLoadingTracks(rawTracks, isMixed) {
-        const { withPreview, withoutPreview, totalRaw } = this._processRawTracks(rawTracks);
+        const { processed, totalRaw } = this._processRawTracks(rawTracks);
 
-        let gameTracks;
-        this.useEmbed = false;
-
-        if (withPreview.length >= 5) {
-            gameTracks = withPreview;
-            const skipped = withoutPreview.length;
-            if (skipped > 0) {
-                console.log(`${skipped} tracks skipped (no audio preview available)`);
-            }
-        } else if (withPreview.length + withoutPreview.length > 0) {
-            gameTracks = [...withPreview, ...withoutPreview];
-            this.useEmbed = true;
+        if (processed.length === 0) {
             this.showMessage(
-                `Only ${withPreview.length} tracks have audio previews. ` +
-                `Using Spotify embed player for ${withoutPreview.length} others.`,
-                'info'
-            );
-        } else {
-            this.showMessage(
-                `No playable tracks found (${totalRaw} total in playlist). ` +
-                'Try a different playlist, or check your Spotify Developer Dashboard user management.',
+                `No playable tracks found (${totalRaw} in playlist). ` +
+                'Try one of YOUR OWN playlists — Spotify blocks access to other people\'s playlists in Developer Mode.',
                 'error'
             );
             return;
         }
 
-        const unique = this.deduplicateTracks(gameTracks);
+        const unique = this.deduplicateTracks(processed);
         this.spotifyTracks = this.shuffleArray(unique);
 
         this.gameData = this.spotifyTracks;
         this.spotifyMode = true;
 
         const msg = isMixed
-            ? `🎵 Mixed! ${this.spotifyTracks.length} unique tracks loaded!`
-            : `🎵 ${this.spotifyTracks.length} tracks loaded!`;
+            ? `� Mixed! ${this.spotifyTracks.length} tracks ready to stream!`
+            : `� ${this.spotifyTracks.length} tracks ready to stream!`;
         this.showMessage(msg, 'success');
 
         this.startGame();
@@ -424,7 +394,6 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
         this.spotifyMode = false;
         this.currentPlaylistId = null;
         this.spotifyTracks = [];
-        this.useEmbed = false;
         this.showMessage('Switched to local mode', 'info');
         this.startGame();
     }
@@ -477,38 +446,48 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
         return cardDiv;
     }
 
+    revealYears() {
+        this.yearsRevealed = true;
+        this.renderCurrentCard();
+        this.renderTimeline();
+
+        const wrapper = document.querySelector('.spotify-embed-wrapper');
+        if (wrapper) wrapper.classList.remove('hide-info');
+
+        this.showMessage('Song information revealed!', 'info');
+    }
+
     loadAudio() {
         if (!this.currentCard) return;
 
         const embedContainer = document.getElementById('spotify-embed-container');
+        const audioPlayer = document.getElementById('audio-player');
 
-        if (this.spotifyMode && this.currentCard.preview_url) {
-            this.audioElement.src = this.currentCard.preview_url;
-            this.audioElement.load();
-            this.isPlaying = false;
-            this.playPauseBtn.textContent = '▶️ Play';
-            this.audioElement.parentElement?.classList.remove('hidden');
-            if (embedContainer) embedContainer.classList.add('hidden');
-        } else if (this.spotifyMode && !this.currentCard.preview_url) {
-            this.audioElement.removeAttribute('src');
-            this.audioElement.parentElement?.classList.add('hidden');
+        if (this.spotifyMode) {
+            if (audioPlayer) audioPlayer.classList.add('hidden');
             if (embedContainer) {
                 embedContainer.classList.remove('hidden');
-                embedContainer.innerHTML = `<iframe
-                    src="https://open.spotify.com/embed/track/${this.currentCard.id}?utm_source=generator&theme=0"
-                    width="100%" height="152" frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                    style="border-radius:12px;"></iframe>
-                    <p class="text-xs text-purple-300 mt-2 text-center">No preview available — use the Spotify player above</p>`;
+                const hideClass = this.yearsRevealed ? '' : 'hide-info';
+                embedContainer.innerHTML = `
+                    <div class="spotify-embed-wrapper ${hideClass}">
+                        <iframe
+                            src="https://open.spotify.com/embed/track/${this.currentCard.id}?utm_source=generator&theme=0"
+                            width="100%" height="80" frameBorder="0"
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                            loading="lazy"
+                            style="border-radius:12px;"></iframe>
+                        <div class="embed-overlay">
+                            <span>🎵 Press play — guess the song!</span>
+                        </div>
+                    </div>`;
             }
         } else {
+            if (audioPlayer) audioPlayer.classList.remove('hidden');
+            if (embedContainer) embedContainer.classList.add('hidden');
             this.audioElement.src = `assets/music/${this.currentCard.id}.mp3`;
             this.audioElement.load();
             this.isPlaying = false;
             this.playPauseBtn.textContent = '▶️ Play';
-            this.audioElement.parentElement?.classList.remove('hidden');
-            if (embedContainer) embedContainer.classList.add('hidden');
         }
     }
 }

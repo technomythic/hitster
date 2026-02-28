@@ -242,3 +242,42 @@ select option:checked {
     background: #5E5CE6;
     color: white;
 }
+
+/* Spotify Embed Streaming Player */
+.spotify-embed-wrapper {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #282828;
+}
+
+.spotify-embed-wrapper iframe {
+    display: block;
+}
+
+.spotify-embed-wrapper .embed-overlay {
+    position: absolute;
+    top: 0;
+    left: 80px;
+    right: 0;
+    bottom: 0;
+    background: #282828;
+    display: flex;
+    align-items: center;
+    padding-left: 20px;
+    color: #b3b3b3;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 1;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.spotify-embed-wrapper:not(.hide-info) .embed-overlay {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.spotify-embed-wrapper.hide-info .embed-overlay {
+    opacity: 1;
+}
