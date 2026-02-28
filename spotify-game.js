@@ -5,6 +5,9 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
         this.spotifyMode = false;
         this.currentPlaylistId = null;
         this.spotifyTracks = [];
+        this.activeDeviceId = null;
+        this.connectAvailable = false;
+        this.spotifyPlaying = false;
         this.initializeSpotifyUI();
         this.checkSpotifyAuth();
     }
@@ -112,6 +115,8 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
             await this.loadPlaylists();
             if (playlistContainer) playlistContainer.classList.remove('hidden');
 
+            await this.detectDevices();
+
         } catch (error) {
             console.error('Error updating Spotify UI:', error);
             if (spotifyStatus) {
@@ -134,6 +139,8 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
         this.spotifyAuth.logout();
         this.spotifyMode = false;
         this.spotifyTracks = [];
+        this.activeDeviceId = null;
+        this.connectAvailable = false;
         this.updateSpotifyUI();
         this.showMessage('Logged out of Spotify', 'info');
     }
@@ -390,7 +397,15 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
         return shuffled;
     }
 
+    drawNextCard() {
+        if (this.spotifyMode && this.spotifyPlaying) {
+            this.connectSkip();
+        }
+        super.drawNextCard();
+    }
+
     switchToLocalMode() {
+        if (this.spotifyPlaying) this.connectSkip();
         this.spotifyMode = false;
         this.currentPlaylistId = null;
         this.spotifyTracks = [];
@@ -446,6 +461,54 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
         return cardDiv;
     }
 
+    // ── Spotify Connect: device detection & playback ──
+
+    async detectDevices() {
+        const deviceInfo = document.getElementById('device-info');
+        const deviceSelect = document.getElementById('device-select');
+        const refreshDevicesBtn = document.getElementById('refresh-devices-btn');
+
+        if (refreshDevicesBtn) {
+            refreshDevicesBtn.onclick = () => this.detectDevices();
+        }
+
+        try {
+            const devices = await this.spotifyAuth.getDevices();
+
+            if (deviceSelect) {
+                deviceSelect.innerHTML = '';
+                if (devices.length === 0) {
+                    deviceSelect.innerHTML = '<option value="">No Spotify devices found</option>';
+                    this.connectAvailable = false;
+                } else {
+                    this.connectAvailable = true;
+                    devices.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.id;
+                        opt.textContent = `${d.name} (${d.type})`;
+                        if (d.is_active) opt.selected = true;
+                        opt.style.cssText = 'background:#1a1a2e;color:white';
+                        deviceSelect.appendChild(opt);
+                    });
+                    this.activeDeviceId = devices.find(d => d.is_active)?.id || devices[0].id;
+                }
+            }
+
+            if (deviceInfo) {
+                deviceInfo.classList.remove('hidden');
+            }
+
+            if (devices.length === 0) {
+                this.showMessage('Open Spotify on your phone or computer, then click Refresh Devices', 'info');
+            } else {
+                this.showMessage(`Found ${devices.length} Spotify device(s)`, 'success');
+            }
+        } catch (e) {
+            console.warn('Could not detect devices:', e);
+            this.connectAvailable = false;
+        }
+    }
+
     revealYears() {
         this.yearsRevealed = true;
         this.renderCurrentCard();
@@ -457,14 +520,46 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
         this.showMessage('Song information revealed!', 'info');
     }
 
-    loadAudio() {
+    async loadAudio() {
         if (!this.currentCard) return;
 
         const embedContainer = document.getElementById('spotify-embed-container');
         const audioPlayer = document.getElementById('audio-player');
+        const connectPlayer = document.getElementById('spotify-connect-player');
 
-        if (this.spotifyMode) {
-            if (audioPlayer) audioPlayer.classList.add('hidden');
+        if (!this.spotifyMode) {
+            // Local mode
+            if (audioPlayer) audioPlayer.classList.remove('hidden');
+            if (embedContainer) embedContainer.classList.add('hidden');
+            if (connectPlayer) connectPlayer.classList.add('hidden');
+            this.audioElement.src = `assets/music/${this.currentCard.id}.mp3`;
+            this.audioElement.load();
+            this.isPlaying = false;
+            this.playPauseBtn.textContent = '▶️ Play';
+            return;
+        }
+
+        // Spotify mode — try Connect first, fallback to embed
+        if (audioPlayer) audioPlayer.classList.add('hidden');
+
+        // Get selected device
+        const deviceSelect = document.getElementById('device-select');
+        if (deviceSelect?.value) {
+            this.activeDeviceId = deviceSelect.value;
+        }
+
+        if (this.connectAvailable && this.activeDeviceId) {
+            // Spotify Connect mode — play on real Spotify app
+            if (embedContainer) embedContainer.classList.add('hidden');
+            if (connectPlayer) {
+                connectPlayer.classList.remove('hidden');
+                this.spotifyPlaying = false;
+                const connectPlayBtn = document.getElementById('connect-play-btn');
+                if (connectPlayBtn) connectPlayBtn.textContent = '▶️ Play on Spotify';
+            }
+        } else {
+            // Embed fallback
+            if (connectPlayer) connectPlayer.classList.add('hidden');
             if (embedContainer) {
                 embedContainer.classList.remove('hidden');
                 const hideClass = this.yearsRevealed ? '' : 'hide-info';
@@ -481,17 +576,48 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
                         </div>
                     </div>`;
             }
-        } else {
-            if (audioPlayer) audioPlayer.classList.remove('hidden');
-            if (embedContainer) embedContainer.classList.add('hidden');
-            this.audioElement.src = `assets/music/${this.currentCard.id}.mp3`;
-            this.audioElement.load();
-            this.isPlaying = false;
-            this.playPauseBtn.textContent = '▶️ Play';
         }
+    }
+
+    async connectPlay() {
+        if (!this.currentCard) return;
+        const connectPlayBtn = document.getElementById('connect-play-btn');
+
+        try {
+            if (this.spotifyPlaying) {
+                await this.spotifyAuth.pausePlayback();
+                this.spotifyPlaying = false;
+                if (connectPlayBtn) connectPlayBtn.textContent = '▶️ Play on Spotify';
+            } else {
+                await this.spotifyAuth.playTrack(this.currentCard.id, this.activeDeviceId);
+                this.spotifyPlaying = true;
+                if (connectPlayBtn) connectPlayBtn.textContent = '⏸️ Pause';
+                this.showMessage('🎵 Now playing on your Spotify!', 'success');
+            }
+        } catch (err) {
+            if (err.message === 'NO_DEVICE') {
+                this.showMessage('No active Spotify device. Open Spotify on your phone/computer and try again.', 'error');
+                await this.detectDevices();
+            } else if (err.message === 'PREMIUM_REQUIRED') {
+                this.showMessage('Spotify Premium required for playback control. Using embed player instead.', 'info');
+                this.connectAvailable = false;
+                this.loadAudio();
+            } else {
+                this.showMessage('Playback error: ' + err.message, 'error');
+            }
+        }
+    }
+
+    async connectSkip() {
+        try {
+            await this.spotifyAuth.pausePlayback();
+        } catch (e) { /* ignore */ }
+        this.spotifyPlaying = false;
+        const connectPlayBtn = document.getElementById('connect-play-btn');
+        if (connectPlayBtn) connectPlayBtn.textContent = '▶️ Play on Spotify';
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    new SpotifyMelodyTimeline();
+    window.spotifyGame = new SpotifyMelodyTimeline();
 });

@@ -100,6 +100,19 @@
                 <audio id="audio-element" preload="auto" crossorigin="anonymous"></audio>
             </div>
 
+            <div id="spotify-connect-player" class="hidden bg-gradient-to-r from-green-900/40 to-green-800/40 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-green-500/30">
+                <div class="flex items-center gap-4">
+                    <button id="connect-play-btn" onclick="window.spotifyGame?.connectPlay()"
+                            class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105 shadow-lg text-lg">
+                        ▶️ Play on Spotify
+                    </button>
+                    <div class="flex-1 text-center">
+                        <div class="text-sm text-green-300">🎧 Streaming via Spotify Connect</div>
+                        <div class="text-xs text-green-400/60 mt-1">Song plays on your Spotify app</div>
+                    </div>
+                </div>
+            </div>
+
             <div id="spotify-embed-container" class="hidden mt-4">
             </div>
         </div>
@@ -136,6 +149,22 @@
                                 class="hidden w-full bg-red-500/20 hover:bg-red-500/40 text-red-300 font-bold py-2 px-4 rounded-lg mb-4 text-sm">
                             Disconnect Spotify
                         </button>
+
+                        <div id="device-info" class="hidden mb-4 bg-green-900/30 rounded-lg p-3 border border-green-500/20">
+                            <label class="block text-xs font-bold text-green-300 mb-1">🔊 Spotify Device:</label>
+                            <div class="flex gap-2">
+                                <select id="device-select" 
+                                        class="flex-1 px-2 py-1 bg-white/10 border border-white/20 rounded text-white text-sm"
+                                        style="color:white">
+                                    <option style="background:#1a1a2e;color:white">No devices found</option>
+                                </select>
+                                <button id="refresh-devices-btn" 
+                                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
+                                    🔄
+                                </button>
+                            </div>
+                            <p class="text-xs text-green-400/60 mt-1">Open Spotify on your phone/PC, then refresh</p>
+                        </div>
                         
                         <div id="playlist-container" class="hidden">
                             <div id="single-playlist-section" class="mb-4">

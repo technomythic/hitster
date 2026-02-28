@@ -2,7 +2,7 @@ class SpotifyAuth {
     constructor() {
         this.clientId = localStorage.getItem('spotify_client_id') || '';
         this.redirectUri = window.location.origin + window.location.pathname;
-        this.scopes = 'user-read-private user-read-email playlist-read-private playlist-read-collaborative';
+        this.scopes = 'user-read-private user-read-email playlist-read-private playlist-read-collaborative user-modify-playback-state user-read-playback-state user-read-currently-playing';
         this.accessToken = null;
         this.refreshToken = null;
         this.tokenExpiry = null;
@@ -286,6 +286,89 @@ class SpotifyAuth {
 
     async getUserProfile() {
         return await this.fetchSpotifyAPI('/me');
+    }
+
+    // ── Spotify Connect: control the real Spotify app ──
+
+    async getDevices() {
+        const data = await this.fetchSpotifyAPI('/me/player/devices');
+        return data.devices || [];
+    }
+
+    async getPlaybackState() {
+        try {
+            if (!await this.ensureAuthenticated()) return null;
+            const response = await fetch('https://api.spotify.com/v1/me/player', {
+                headers: { 'Authorization': `Bearer ${this.accessToken}` },
+            });
+            if (response.status === 204 || response.status === 404) return null;
+            if (!response.ok) return null;
+            return await response.json();
+        } catch (e) {
+            console.warn('Could not get playback state:', e);
+            return null;
+        }
+    }
+
+    async playTrack(trackId, deviceId) {
+        if (!await this.ensureAuthenticated()) {
+            throw new Error('Not authenticated');
+        }
+
+        const url = deviceId
+            ? `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`
+            : 'https://api.spotify.com/v1/me/player/play';
+
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${this.accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                uris: [`spotify:track:${trackId}`],
+            }),
+        });
+
+        if (response.status === 404) {
+            throw new Error('NO_DEVICE');
+        }
+        if (response.status === 403) {
+            throw new Error('PREMIUM_REQUIRED');
+        }
+        if (!response.ok && response.status !== 204) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error?.message || `Playback failed (${response.status})`);
+        }
+        return true;
+    }
+
+    async pausePlayback() {
+        if (!await this.ensureAuthenticated()) return;
+        await fetch('https://api.spotify.com/v1/me/player/pause', {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${this.accessToken}` },
+        });
+    }
+
+    async resumePlayback() {
+        if (!await this.ensureAuthenticated()) return;
+        await fetch('https://api.spotify.com/v1/me/player/play', {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${this.accessToken}` },
+        });
+    }
+
+    async transferPlayback(deviceId) {
+        if (!await this.ensureAuthenticated()) return;
+        await fetch('https://api.spotify.com/v1/me/player', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${this.accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ device_ids: [deviceId], play: false }),
+        });
     }
 }
 
