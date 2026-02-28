@@ -222,3 +222,23 @@ button:disabled {
 button:disabled:hover {
     transform: none;
 }
+
+/* Fix select dropdown visibility */
+select {
+    color: white !important;
+}
+
+select option {
+    background: #1a1a2e;
+    color: white;
+}
+
+select:focus option {
+    background: #2a2a3e;
+    color: white;
+}
+
+select option:checked {
+    background: #5E5CE6;
+    color: white;
+}

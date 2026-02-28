@@ -157,11 +157,15 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
             const topHitsOption = document.createElement('option');
             topHitsOption.value = '37i9dQZF1DXcBWIGoYBM5M';
             topHitsOption.textContent = '🔥 Today\'s Top Hits (Spotify)';
+            topHitsOption.style.background = '#1a1a2e';
+            topHitsOption.style.color = 'white';
             playlistSelect.appendChild(topHitsOption);
             
             const divider = document.createElement('option');
             divider.disabled = true;
             divider.textContent = '─────── Your Playlists ───────';
+            divider.style.background = '#1a1a2e';
+            divider.style.color = '#888';
             playlistSelect.appendChild(divider);
             
             playlists.forEach(playlist => {
@@ -169,6 +173,8 @@ class SpotifyMelodyTimeline extends MelodyTimeline {
                 option.value = playlist.id;
                 const trackCount = playlist.tracks?.total || '?';
                 option.textContent = `${playlist.name} (${trackCount} tracks)`;
+                option.style.background = '#1a1a2e';
+                option.style.color = 'white';
                 playlistSelect.appendChild(option);
             });
             

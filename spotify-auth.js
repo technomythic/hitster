@@ -1,13 +1,12 @@
 class SpotifyAuth {
     constructor() {
-        this.clientId = '';
+        this.clientId = localStorage.getItem('spotify_client_id') || '';
         this.redirectUri = window.location.origin + window.location.pathname;
         this.scopes = [
             'user-read-private',
             'user-read-email',
             'playlist-read-private',
-            'playlist-read-collaborative',
-            'user-library-read'
+            'playlist-read-collaborative'
         ];
         this.accessToken = null;
         this.tokenExpiry = null;
@@ -152,7 +151,14 @@ class SpotifyAuth {
                 this.logout();
                 throw new Error('Session expired. Please login again.');
             }
-            throw new Error(`Spotify API error: ${response.status}`);
+            if (response.status === 403) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Spotify 403 Error:', errorData);
+                throw new Error('Access forbidden. This playlist may be private or you need additional permissions. Try: 1) Use your own playlists, 2) Re-login to Spotify, 3) Check playlist is public');
+            }
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Spotify API Error:', response.status, errorData);
+            throw new Error(`Spotify API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
         }
 
         return response.json();
