@@ -99,6 +99,9 @@
                 </div>
                 <audio id="audio-element" preload="auto" crossorigin="anonymous"></audio>
             </div>
+
+            <div id="spotify-embed-container" class="hidden bg-white/10 backdrop-blur-lg rounded-2xl p-4 shadow-2xl mt-4">
+            </div>
         </div>
 
         <div id="start-screen" class="text-center">
@@ -126,14 +129,18 @@
                         </div>
                         
                         <button id="spotify-login-btn" 
-                                class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg mb-4">
+                                class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg mb-2">
                             Connect to Spotify
+                        </button>
+                        <button id="spotify-logout-btn" 
+                                class="hidden w-full bg-red-500/20 hover:bg-red-500/40 text-red-300 font-bold py-2 px-4 rounded-lg mb-4 text-sm">
+                            Disconnect Spotify
                         </button>
                         
                         <div id="playlist-container" class="hidden">
-                            <div class="mb-4">
+                            <div id="single-playlist-section" class="mb-4">
                                 <div class="flex justify-between items-center mb-2">
-                                    <label class="text-sm font-bold">Single Playlist:</label>
+                                    <label class="text-sm font-bold">Your Playlists:</label>
                                     <button id="toggle-multi-mode" class="text-xs text-purple-300 hover:text-white underline">
                                         Switch to Multi-Playlist Mode
                                     </button>
